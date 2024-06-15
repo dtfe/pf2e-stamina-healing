@@ -1,0 +1,12 @@
+{
+  "id": "pf2e-stamina-healing",
+  "title": "PF2E Stamina Healing",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "12",
+    "verified": "12"
+  },
+  "esmodules": [
+    "stamina-healing.js"
+  ]
+}
