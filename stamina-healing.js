@@ -16,33 +16,53 @@ Hooks.on('ready', () => {
 
     // Check if damage is negative (healing)
     if (damage.damage < 0) {
-      let remainingHealing = -damage.damage;
-
-
-      // HP calculations
+      const remainingHealing = -damage.damage;
       const hpToHeal = Math.min(hp.max - hp.value, remainingHealing);
-      console.log(hpToHeal, "hp to heal")
-      if (hpToHeal > 0) {
-        remainingHealing -= hpToHeal;
-        console.log(`Healing HP: ${hpToHeal}, Remaining healing: ${remainingHealing}`);
-      }
+      let remainingHealingAfterHP = remainingHealing - hpToHeal;
 
-      // Apply remaining healing to stamina
-      if (remainingHealing > 0) {
-        const staminaToHeal = Math.min(this.system.attributes.hp.sp.max - stamina, remainingHealing);
-        console.log("stamina to heal", staminaToHeal, ". Current Stamina: ", stamina)
-        if (staminaToHeal > 0) {
-          updateData['system.attributes.hp.sp.value'] = stamina + staminaToHeal;
-          console.log(`Healing Stamina: ${staminaToHeal}`);
-        }
-      }
+      // Prompt the user if they want to apply remaining healing to stamina
+      new Dialog({
+        title: "Apply Healing",
+        content: `<p>Do you want to apply remaining healing (${remainingHealingAfterHP}) to stamina?</p>`,
+        buttons: {
+          yes: {
+            icon: "<i class='fas fa-check'></i>",
+            label: "Yes",
+            callback: async () => {
 
-      this.update(updateData);
+              if (remainingHealingAfterHP > 0) {
+                const staminaToHeal = Math.min(this.system.attributes.hp.sp.max - stamina, remainingHealingAfterHP);
+                if (staminaToHeal > 0) {
+                  updateData['system.attributes.hp.sp.value'] = stamina + staminaToHeal;
+                  console.log(`Healing Stamina: ${staminaToHeal}`);
+                }
+              }
 
-      
+              await this.update(updateData);
+
+              // Display healing amount on token
+              if (token && (hpToHeal > 0 || staminaToHeal > 0)) {
+                const totalHealed = hpToHeal + staminaToHeal;
+                token.object?.floatingText(totalHealed, { type: CONST.TEXT_ANIMATION_TYPES.HEAL });
+              }
+            }
+          },
+          no: {
+            icon: "<i class='fas fa-times'></i>",
+            label: "No",
+            callback: async () => {
+              await this.update(updateData);
+
+              // Display healing amount on token
+              if (token && hpToHeal > 0) {
+                token.object?.floatingText(hpToHeal, { type: CONST.TEXT_ANIMATION_TYPES.HEAL });
+              }
+            }
+          }
+        },
+        default: "yes"
+      }).render(true);
     }
-
-    
 
     // Call the original method for regular damage handling
     return wrapped(damage, token, updateData, options);
