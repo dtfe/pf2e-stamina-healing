@@ -14,8 +14,6 @@ Hooks.on('ready', () => {
 
     console.log("applyDamage called with damage:", damage.damage);
 
-    const actorToken = this.getActiveTokens()[0] || token;
-
     // Check if damage is negative (healing)
     if (damage.damage < 0) {
       const remainingHealing = -damage.damage;
