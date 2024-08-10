@@ -14,54 +14,74 @@ Hooks.on('ready', () => {
 
     console.log("applyDamage called with damage:", damage.damage);
 
+    const actorToken = this.getActiveTokens()[0] || token;
+
     // Check if damage is negative (healing)
     if (damage.damage < 0) {
       const remainingHealing = -damage.damage;
       const hpToHeal = Math.min(hp.max - hp.value, remainingHealing);
       let remainingHealingAfterHP = remainingHealing - hpToHeal;
 
-      // Prompt the user if they want to apply remaining healing to stamina
-      new Dialog({
-        title: "Apply Healing",
-        content: `<p>Do you want to apply remaining healing (${remainingHealingAfterHP}) to stamina?</p>`,
-        buttons: {
-          yes: {
-            icon: "<i class='fas fa-check'></i>",
-            label: "Yes",
-            callback: async () => {
+      if (remainingHealingAfterHP <= 0) {
+        // Automatically choose "no" if there's no remaining healing
+        await this.update(updateData);
 
-              if (remainingHealingAfterHP > 0) {
-                const staminaToHeal = Math.min(this.system.attributes.hp.sp.max - stamina, remainingHealingAfterHP);
-                if (staminaToHeal > 0) {
-                  updateData['system.attributes.hp.sp.value'] = stamina + staminaToHeal;
-                  console.log(`Healing Stamina: ${staminaToHeal}`);
+        // Create a chat message to inform everyone about the healing
+        let messageContent = `${this.name} heals ${hpToHeal} HP`;
+        ChatMessage.create({
+          speaker: ChatMessage.getSpeaker({ actor: this }),
+          content: messageContent
+        });
+      } else {
+        // Prompt the user if they want to apply remaining healing to stamina
+        new Dialog({
+          title: "Apply Healing",
+          content: `<p>Do you want to apply remaining healing (${remainingHealingAfterHP}) to stamina?</p>`,
+          buttons: {
+            yes: {
+              icon: "<i class='fas fa-check'></i>",
+              label: "Yes",
+              callback: async () => {
+                let staminaToHeal = 0;
+
+                if (remainingHealingAfterHP > 0) {
+                  staminaToHeal = Math.min(this.system.attributes.hp.sp.max - stamina, remainingHealingAfterHP);
+                  if (staminaToHeal > 0) {
+                    updateData['system.attributes.hp.sp.value'] = stamina + staminaToHeal;
+                    console.log(`Healing Stamina: ${staminaToHeal}`);
+                  }
                 }
+
+                await this.update(updateData);
+
+                // Create a chat message to inform everyone about the healing
+                let messageContent = `Heals for ${hpToHeal} HP and recovers `
+                if (hpToHeal == 0){
+                  messageContent = `Recovers `;
+                }
+                if (staminaToHeal > 0) {
+                  messageContent += `${staminaToHeal} stamina`;
+                }
+                if (messageContent == `Recovers `){
+                  messageContent = `${this.name} is at full health.`
+                }
+                ChatMessage.create({
+                  speaker: ChatMessage.getSpeaker({ actor: this }),
+                  content: messageContent
+                });
               }
-
-              await this.update(updateData);
-
-              // Display healing amount on token
-              if (token && (hpToHeal > 0 || staminaToHeal > 0)) {
-                const totalHealed = hpToHeal + staminaToHeal;
-                token.object?.floatingText(totalHealed, { type: CONST.TEXT_ANIMATION_TYPES.HEAL });
+            },
+            no: {
+              icon: "<i class='fas fa-times'></i>",
+              label: "No",
+              callback: async () => {
+                await this.update(updateData);
               }
             }
           },
-          no: {
-            icon: "<i class='fas fa-times'></i>",
-            label: "No",
-            callback: async () => {
-              await this.update(updateData);
-
-              // Display healing amount on token
-              if (token && hpToHeal > 0) {
-                token.object?.floatingText(hpToHeal, { type: CONST.TEXT_ANIMATION_TYPES.HEAL });
-              }
-            }
-          }
-        },
-        default: "yes"
-      }).render(true);
+          default: "yes"
+        }).render(true);
+      }
     }
 
     // Call the original method for regular damage handling
