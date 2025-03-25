@@ -96,13 +96,6 @@ Hooks.on('ready', () => {
       if (remainingHealingAfterHP <= 0) {
         // Automatically choose "no" if there's no remaining healing
         await this.update(updateData);
-
-        // Create a chat message to inform everyone about the healing
-        let messageContent = `${this.name} heals ${hpToHeal} HP`;
-        ChatMessage.create({
-          speaker: ChatMessage.getSpeaker({ actor: this }),
-          content: messageContent
-        });
       } else {
         // Prompt the user if they want to apply remaining healing to stamina
         new Dialog({
