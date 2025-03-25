@@ -116,17 +116,17 @@ Hooks.on('ready', () => {
                     updateData['system.attributes.hp.sp.value'] = stamina + staminaToHeal;
                     let renderedToken = null;
 
-                    // 1. Use passed-in token (from applyDamage)
+                    // Use passed-in token
                     if (token?.object) {
                       renderedToken = token.object;
                     
-                    // 2. Try actor’s active tokens
+                    // Try actors active tokens
                     } else {
                       const fallback = actor.getActiveTokens(true)[0];
                       if (fallback?.object) {
                         renderedToken = fallback.object;
                     
-                    // 3. Last resort: scan visible scene tokens
+                    // Last resort: scan visible scene tokens
                       } else {
                         const fromScene = canvas.tokens.placeables.find(t => t.actor?.id === actor.id);
                         if (fromScene) {
@@ -212,7 +212,7 @@ Hooks.on("renderChatMessage", (message, html) => {
 
     await actor.update(updates);
 
-    // Parse only the original message content (not full HTML!)
+    // Parse only the original message content
     const parser = new DOMParser();
     const doc = parser.parseFromString(message.content, "text/html");
 
