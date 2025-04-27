@@ -3,7 +3,7 @@
   "title": "PF2E Stamina Healing",
   "version": "1.1.0",
   "compatibility": {
-    "minimum": "12",
+    "minimum": "11",
     "verified": "12"
   },
   "esmodules": [
